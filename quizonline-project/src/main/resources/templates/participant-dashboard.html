@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- ✅ makes it mobile friendly -->
+  <title>Participant Dashboard</title>
+
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+   * {
+  font-family: "Poppins", sans-serif;
+}
+
+    body {
+  background: linear-gradient(135deg, #ff9acb, #ffd6e8); /* Candy pink gradient */
+  min-height: 100vh;
+  padding-bottom: 50px;
+}
+
+ h2, h4 {
+  font-weight: 600;
+  color: #d81b60; /* Deep pink headings */
+}
+ .quiz-card {
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(255, 105, 180, 0.25); /* Pink candy shadow */
+}
+
+
+    .quiz-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.35);
+}
+
+.card-body {
+  background-color: rgba(255, 240, 245, 0.95); /* Soft candy pink container */
+}
+  #timer {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ef3b8c; /* Hot pink timer */
+  background: #fff0f5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
+}
+    #quizSection .card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
+}
+
+    button {
+  border-radius: 20px !important; /* Candy-pill style buttons */
+  font-weight: 500;
+  background: #ef3b8c;
+  color: white;
+  border: none;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #d81b60;
+}
+    #scoreSection {
+  background: rgba(255, 240, 245, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(255, 105, 180, 0.25);
+  padding: 25px;
+  text-align: center;
+  color: #4a003d;
+}
+
+   @media (max-width: 768px) {
+  .quiz-card .card-body h5 {
+    font-size: 1rem;
+  }
+  #timer {
+    font-size: 1rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+  footer {
+  text-align: center;
+  color: #6d004e;
+  margin-top: 30px;
+  font-size: 0.9rem;
+}
+  </style>
+</head>
+<body>
+
+  <div class="container mt-4">
+    <h2 class="text-center mb-4">Participant Dashboard</h2>
+
+    <!-- ✅ Available Quizzes -->
+    <div id="quizListSection">
+      <h4 class="mb-3">Available Quizzes</h4>
+      <div id="quizList" class="row gy-3"></div>
+    </div>
+
+    <!-- ✅ Quiz Section -->
+    <div id="quizSection" style="display:none;">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h4 id="quizTitle"></h4>
+        <div id="timer"></div>
+      </div>
+      <div id="questionContainer" class="mt-3"></div>
+      <button id="submitQuizBtn" class="btn btn-success mt-3 w-100">Submit Quiz</button>
+    </div>
+
+    <!-- ✅ Score Section -->
+    <div id="scoreSection" style="display:none;">
+      <h4>🎉 Quiz Completed!</h4>
+      <p id="scoreDisplay" class="fs-5 mt-3"></p>
+      <button class="btn btn-primary mt-3" onclick="window.location.reload()">Go Back to Dashboard</button>
+    </div>
+
+    <footer>© 2025 Quiz Portal | Designed for Mobile & Desktop</footer>
+  </div>
+
+  <!-- ✅ Script -->
+  <script>
+    const email = localStorage.getItem("userEmail");
+    let currentQuizId = null;
+    let questions = [];
+    let timeLimit = 0;
+    let timerInterval;
+
+    // Load quizzes
+    async function loadQuizzes() {
+      const response = await fetch("/api/participant/quizzes");
+      const data = await response.json();
+      const container = document.getElementById("quizList");
+      container.innerHTML = "";
+
+      data.forEach(quiz => {
+        const col = document.createElement("div");
+        col.className = "col-12 col-md-6 col-lg-4";
+        col.innerHTML = `
+          <div class="card quiz-card" onclick="startQuiz(${quiz.id}, '${quiz.title}', ${quiz.timeLimit || 5})">
+            <div class="card-body">
+              <h5 class="card-title">${quiz.title}</h5>
+              <p>${quiz.description || "No description available."}</p>
+              <p><strong>Time Limit:</strong> ${quiz.timeLimit || 5} min</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(col);
+      });
+    }
+
+    // Start Quiz
+    async function startQuiz(id, title, limit) {
+      currentQuizId = id;
+      timeLimit = limit;
+      document.getElementById("quizListSection").style.display = "none";
+      document.getElementById("quizSection").style.display = "block";
+      document.getElementById("quizTitle").innerText = title;
+
+      const res = await fetch(`/api/participant/quiz/${id}/questions`);
+      questions = await res.json();
+
+      renderQuestions();
+      startTimer(timeLimit * 60);
+    }
+
+    // Render Questions
+    function renderQuestions() {
+      const container = document.getElementById("questionContainer");
+      container.innerHTML = "";
+      questions.forEach((q, idx) => {
+        const div = document.createElement("div");
+        div.className = "card mb-3";
+        div.innerHTML = `
+          <div class="card-body">
+            <h6>${idx + 1}. ${q.questionText}</h6>
+            ${q.options.map(opt => `
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="question${q.id}" value="${opt}">
+                <label class="form-check-label">${opt}</label>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Timer Logic
+    function startTimer(seconds) {
+      const timerDisplay = document.getElementById("timer");
+      clearInterval(timerInterval);
+
+      function updateTimer() {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerDisplay.textContent = `⏰ ${mins}:${secs < 10 ? "0" : ""}${secs}`;
+        if (seconds <= 0) {
+          clearInterval(timerInterval);
+          alert("⏰ Time's up! Submitting quiz automatically...");
+          submitQuiz();
+        }
+        seconds--;
+      }
+
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Submit Quiz
+    document.getElementById("submitQuizBtn").addEventListener("click", submitQuiz);
+
+    async function submitQuiz() {
+      clearInterval(timerInterval);
+
+      let answers = [];
+      let score = 0;
+
+      questions.forEach(q => {
+        const selected = document.querySelector(`input[name="question${q.id}"]:checked`);
+        if (selected) {
+          answers.push({ questionId: q.id, selectedOption: selected.value });
+          if (selected.value === q.correctAnswer) score++;
+        }
+      });
+
+      const attempt = {
+        user: { email: email },
+        quiz: { id: currentQuizId },
+        score: score,
+        answers: answers
+      };
+
+      const res = await fetch("/api/attempts/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(attempt)
+      });
+
+      if (res.ok) {
+        document.getElementById("quizSection").style.display = "none";
+        document.getElementById("scoreSection").style.display = "block";
+        document.getElementById("scoreDisplay").innerText =
+          `Your score: ${score} / ${questions.length}\n✅ Result has been sent to your registered email.`;
+      } else {
+        alert("❌ Error submitting quiz. Please try again.");
+      }
+    }
+
+    loadQuizzes();
+  </script>
+</body>
+</html>

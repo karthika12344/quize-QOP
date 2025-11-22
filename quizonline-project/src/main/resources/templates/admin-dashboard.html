@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Dashboard — Quiz Manager</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    * { font-family: "Poppins", sans-serif; }
+    body {
+  background: linear-gradient(135deg, #ff9acb, #ffd6e8);
+  min-height: 100vh;
+  color: #4a003d;
+  padding-bottom: 50px;
+}
+
+    h2 {
+  font-weight: 600;
+  color: #d81b60;
+}
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .btn {
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-success:hover,
+    .btn-outline-info:hover,
+    .btn-outline-danger:hover {
+      color: #fff !important;
+    }
+
+    .small-muted { font-size: 0.9rem; color: #6c757d; }
+    .option-pill {
+      display:inline-block;
+      margin:3px 6px 3px 0;
+      padding:4px 10px;
+      background:#f1f3f5;
+      border-radius:999px;
+      font-size:.9rem;
+    }
+
+    /* Navbar-like header on small devices */
+    .admin-header {
+  background: linear-gradient(45deg, #ff69b4, #ef3b8c);
+  color: #fff;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+    .admin-header h2 {
+      color: #fff;
+      font-size: 1.6rem;
+    }
+
+    @media (max-width: 768px) {
+      .admin-header {
+        text-align: center;
+      }
+      .btn {
+        font-size: 0.9rem;
+      }
+      .card h5 {
+        font-size: 1rem;
+      }
+    }
+
+    .offcanvas-body {
+      background: #fafafa;
+      border-radius: 8px;
+    }
+
+    footer {
+      text-align: center;
+      color: #666;
+      margin-top: 30px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container my-4">
+  <!-- HEADER -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between admin-header mb-4">
+    <h2 class="mb-2">Admin Dashboard — Quiz Management</h2>
+    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#quizModal" onclick="openCreateQuiz()">➕ New Quiz</button>
+  </div>
+
+  <!-- QUIZ LIST -->
+  <div id="quizzesContainer" class="row gy-3"></div>
+</div>
+
+<!-- QUIZ CREATE/EDIT MODAL -->
+<div class="modal fade" id="quizModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form id="quizForm" class="modal-content shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="quizModalTitle">Create Quiz</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="quizId" />
+        <div class="mb-3">
+          <label class="form-label">Title</label>
+          <input id="quizTitle" class="form-control" placeholder="Enter quiz title" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea id="quizDescription" class="form-control" rows="2" placeholder="Enter quiz description"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Time limit (minutes)</label>
+          <input type="number" id="quizTimeLimit" class="form-control" min="1" value="5" required />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Quiz</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QUESTION ADD/EDIT MODAL -->
+<div class="modal fade" id="questionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form id="questionForm" class="modal-content shadow">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="questionModalTitle">Add Question</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="questionId" />
+        <input type="hidden" id="questionQuizId" />
+        <div class="mb-3">
+          <label class="form-label">Question Text</label>
+          <input id="questionText" class="form-control" placeholder="Enter your question" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Options (each on new line)</label>
+          <textarea id="questionOptions" class="form-control" rows="4" placeholder="Enter each option on a new line" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Correct Answer</label>
+          <input id="questionCorrect" class="form-control" placeholder="Enter correct option text" required />
+          <div class="form-text small-muted">Provide the exact option text that matches one above.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success">Save Question</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- VIEW QUESTIONS OFFCANVAS -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="questionsOffcanvas" aria-labelledby="questionsOffcanvasLabel">
+  <div class="offcanvas-header bg-info text-white">
+    <h5 id="questionsOffcanvasLabel">Quiz Questions</h5>
+    <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div id="questionsList"></div>
+  </div>
+</div>
+
+<footer>© 2025 Quiz Manager | Optimized for Mobile & Desktop</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Keep your entire JS logic intact below -->
+<script>
+  const API_BASE = "/api/admin";
+
+  function notify(msg) { alert(msg); }
+
+  async function loadQuizzes() {
+    const container = document.getElementById("quizzesContainer");
+    container.innerHTML = '<div class="col-12 text-center py-4 text-muted">Loading quizzes…</div>';
+    try {
+      const res = await fetch(`${API_BASE}/quizzes`);
+      if (!res.ok) throw new Error("Failed to fetch quizzes");
+      const quizzes = await res.json();
+      container.innerHTML =
+        quizzes.map(q => quizCardHtml(q)).join("") ||
+        '<div class="col-12 text-muted text-center">No quizzes yet.</div>';
+    } catch (err) {
+      container.innerHTML = `<div class="col-12 text-danger text-center">Error loading quizzes</div>`;
+      console.error(err);
+    }
+  }
+
+  function quizCardHtml(quiz) {
+    const safeDesc = quiz.description || "";
+    return `
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card p-3 h-100">
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <h5 class="mb-1">${escapeHtml(quiz.title || "")}</h5>
+              <div class="small-muted mb-2">${escapeHtml(safeDesc)}</div>
+              <div><strong>Time Limit:</strong> ${quiz.timeLimit} min</div>
+              <div class="mt-2"><strong>Questions:</strong> ${(quiz.questions || []).length}</div>
+            </div>
+            <div class="text-end mt-2 mt-md-0">
+              <div class="btn-group-vertical w-100">
+                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditQuiz(${quiz.id})">Edit</button>
+                <button class="btn btn-sm btn-outline-success mb-1" onclick="openAddQuestion(${quiz.id}, '${escapeJs(quiz.title)}')">Add Q</button>
+                <button class="btn btn-sm btn-outline-info mb-1" onclick="viewQuestions(${quiz.id}, '${escapeJs(quiz.title)}')">View</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteQuiz(${quiz.id})">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function escapeHtml(s) { return String(s || "").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+  function escapeJs(s) { return String(s || "").replaceAll("'","\\'").replaceAll('"','\\"'); }
+
+  function openCreateQuiz() {
+    document.getElementById("quizId").value = "";
+    document.getElementById("quizTitle").value = "";
+    document.getElementById("quizDescription").value = "";
+    document.getElementById("quizTimeLimit").value = 5;
+    document.getElementById("quizModalTitle").innerText = "Create Quiz";
+  }
+
+  async function openEditQuiz(id) {
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${id}`);
+      if (!res.ok) throw new Error();
+      const q = await res.json();
+      document.getElementById("quizId").value = q.id;
+      document.getElementById("quizTitle").value = q.title || "";
+      document.getElementById("quizDescription").value = q.description || "";
+      document.getElementById("quizTimeLimit").value = q.timeLimit || 5;
+      document.getElementById("quizModalTitle").innerText = "Edit Quiz";
+      new bootstrap.Modal(document.getElementById("quizModal")).show();
+    } catch {
+      notify("Failed to load quiz for edit");
+    }
+  }
+
+  document.getElementById("quizForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("quizId").value;
+    const payload = {
+      id: id ? Number(id) : undefined,
+      title: document.getElementById("quizTitle").value,
+      description: document.getElementById("quizDescription").value,
+      timeLimit: Number(document.getElementById("quizTimeLimit").value || 5)
+    };
+    try {
+      const res = await fetch(`${API_BASE}/quiz`, {
+        method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error();
+      notify("Quiz saved");
+      bootstrap.Modal.getInstance(document.getElementById("quizModal")).hide();
+      loadQuizzes();
+    } catch { notify("Failed to save quiz"); }
+  });
+
+  async function deleteQuiz(id) {
+    if (!confirm("Delete this quiz?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      notify("Quiz deleted");
+      loadQuizzes();
+    } catch { notify("Failed to delete quiz"); }
+  }
+
+  function openAddQuestion(quizId, quizTitle) {
+    document.getElementById("questionQuizId").value = quizId;
+    document.getElementById("questionId").value = "";
+    document.getElementById("questionText").value = "";
+    document.getElementById("questionOptions").value = "";
+    document.getElementById("questionCorrect").value = "";
+    document.getElementById("questionModalTitle").innerText = `Add Question to "${quizTitle}"`;
+    new bootstrap.Modal(document.getElementById("questionModal")).show();
+  }
+
+  document.getElementById("questionForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const qId = document.getElementById("questionId").value;
+    const quizId = document.getElementById("questionQuizId").value;
+    const questionText = document.getElementById("questionText").value.trim();
+    const optionsRaw = document.getElementById("questionOptions").value.split("\n").map(s=>s.trim()).filter(s=>s);
+    const correct = document.getElementById("questionCorrect").value.trim();
+    if (!questionText || optionsRaw.length < 2 || !correct) return alert("Please fill all fields correctly.");
+
+    const payload = { id: qId ? Number(qId) : undefined, questionText, options: optionsRaw, correctAnswer: correct };
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${quizId}/question`, {
+        method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error();
+      notify("Question saved");
+      bootstrap.Modal.getInstance(document.getElementById("questionModal")).hide();
+      if (document.getElementById("questionsOffcanvas").classList.contains("show")) viewQuestions(quizId);
+      loadQuizzes();
+    } catch { notify("Failed to save question"); }
+  });
+
+  async function viewQuestions(quizId) {
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${quizId}/questions`);
+      if (!res.ok) throw new Error();
+      const questions = await res.json();
+      const list = document.getElementById("questionsList");
+      list.innerHTML = `<h6 class="mb-3">Questions (${questions.length})</h6>`;
+      if (!questions.length) list.innerHTML += `<div class="text-muted">No questions yet.</div>`;
+      else questions.forEach(q => {
+        const item = document.createElement("div");
+        item.className = "mb-3 border rounded p-2 bg-white";
+        item.innerHTML = `
+          <div class="d-flex justify-content-between flex-wrap">
+            <div>
+              <strong>${escapeHtml(q.questionText)}</strong>
+              <div class="mt-2">${(q.options||[]).map(o => `<span class='option-pill'>${escapeHtml(o)}</span>`).join('')}</div>
+              <div class="mt-2 small"><strong>Correct:</strong> ${escapeHtml(q.correctAnswer)}</div>
+            </div>
+            <div class="text-end mt-2 mt-md-0">
+              <button class="btn btn-sm btn-outline-primary mb-1" onclick='openEditQuestion(${q.id}, ${quizId})'>Edit</button>
+              <button class="btn btn-sm btn-outline-danger" onclick='deleteQuestion(${q.id}, ${quizId})'>Delete</button>
+            </div>
+          </div>`;
+        list.appendChild(item);
+      });
+      const offcanvas = document.getElementById("questionsOffcanvas");
+      offcanvas.setAttribute("data-quiz-id", quizId);
+      new bootstrap.Offcanvas(offcanvas).show();
+    } catch { notify("Failed to load questions"); }
+  }
+
+  async function openEditQuestion(questionId, quizId) {
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${quizId}/questions`);
+      const questions = await res.json();
+      const q = questions.find(item => Number(item.id) === Number(questionId));
+      if (!q) throw new Error();
+      document.getElementById("questionId").value = q.id;
+      document.getElementById("questionQuizId").value = quizId;
+      document.getElementById("questionText").value = q.questionText;
+      document.getElementById("questionOptions").value = (q.options || []).join("\n");
+      document.getElementById("questionCorrect").value = q.correctAnswer;
+      document.getElementById("questionModalTitle").innerText = "Edit Question";
+      new bootstrap.Modal(document.getElementById("questionModal")).show();
+    } catch { notify("Failed to open question for edit"); }
+  }
+
+  async function deleteQuestion(questionId, quizId) {
+    if (!confirm("Delete this question?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/question/${questionId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      notify("Question deleted");
+      viewQuestions(quizId);
+      loadQuizzes();
+    } catch { notify("Failed to delete question"); }
+  }
+
+  loadQuizzes();
+</script>
+</body>
+</html>

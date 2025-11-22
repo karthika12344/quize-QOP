@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- ✅ Mobile friendly -->
+  <title>Register - Quiz Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+ * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+    body {
+  background: linear-gradient(135deg, #ff9acb, #ffd6e8); /* Candy pink gradient */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 10px;
+}
+
+.register-container {
+  background: rgba(255, 240, 245, 0.97); /* Soft candy pink */
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.25); /* Pink candy shadow */
+  padding: 35px 25px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+h2 {
+  margin-bottom: 20px;
+  color: #d81b60; /* Deep pink heading */
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 25px; /* Candy pill-style inputs */
+  border: 1px solid #f48fb1; /* Light pink border */
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus, select:focus {
+  border-color: #ef3b8c; /* Hot pink focus */
+  box-shadow: 0 0 6px rgba(239, 59, 140, 0.3);
+  outline: none;
+}
+
+button {
+  width: 100%;
+  background: #ef3b8c; /* Hot pink button */
+  color: white;
+  border: none;
+  border-radius: 25px; /* Candy pill button */
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.1s;
+  margin-top: 10px;
+}
+
+button:hover {
+  background: #d81b60; /* Deep pink hover */
+  transform: scale(1.02);
+}
+
+p {
+  margin-top: 15px;
+  color: #6d004e; /* Deep pink text */
+  font-size: 0.95rem;
+}
+
+a {
+  color: #ef3b8c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+    @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .register-container {
+    padding: 25px 20px;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  input, select, button {
+    font-size: 0.95rem;
+  }
+}
+
+  </style>
+
+  <script>
+    async function registerUser(event) {
+      event.preventDefault();
+
+      const user = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value.trim(),
+        role: document.getElementById('role').value
+      };
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user)
+        });
+
+        let data = null;
+        try {
+          data = await response.json();
+        } catch (_) {
+          // ignore if not JSON
+        }
+
+        if (response.status === 200 || response.status === 201) {
+          alert('✅ Registration successful! Redirecting to login page...');
+          window.location.href = '/login';
+        } else {
+          const message = data && data.message ? data.message : '❌ Registration failed. Please try again.';
+          alert(message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('⚠️ Network error. Please check your connection.');
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div class="register-container">
+    <h2>Create Your Account</h2>
+    <form onsubmit="registerUser(event)">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <select id="role" required>
+        <option value="ROLE_PARTICIPANT">Participant</option>
+        <option value="ROLE_ADMIN">Admin</option>
+      </select>
+      <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="/login">Login here</a></p>
+  </div>
+</body>
+</html>

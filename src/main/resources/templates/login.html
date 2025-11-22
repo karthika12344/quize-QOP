@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Quiz Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+   *{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+    body {
+  background: linear-gradient(135deg, #ff9acb, #ffd6e8); /* Candy Pink Gradient */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-container {
+  background: rgba(255, 240, 245, 0.95); /* Soft candy pink glass */
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.25); /* Pink shadow */
+  padding: 30px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+    h2 {
+  margin-bottom: 20px;
+  color: #d81b60; /* Deep pink heading */
+}
+
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #f48fb1; /* light pink border */
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+input:focus {
+  border-color: #ef3b8c; /* Hot pink focus */
+  outline: none;
+}
+  button {
+  width: 100%;
+  background: #ef3b8c; /* Hot pink button */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 10px;
+}
+
+  button:hover {
+  background: #d81b60; /* Deep pink hover */
+}
+
+p {
+  margin-top: 15px;
+  color: #6d004e;
+}
+
+   a {
+  color: #ef3b8c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+    @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <h2>Login</h2>
+    <form action="/login" method="post">
+      <input type="email" name="username" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p>Don’t have an account? <a href="/register">Register here</a></p>
+  </div>
+
+  <script>
+    async function loginUser(event) {
+      event.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.text();
+
+        if (response.ok) {
+          // ✅ Save user email in localStorage for later quiz submission
+          localStorage.setItem("userEmail", email);
+
+          alert("✅ Login successful!");
+          window.location.href = "/participant/dashboard"; // redirect to dashboard
+        } else {
+          alert("❌ Login failed: " + data);
+        }
+      } catch (err) {
+        console.error("Error during login:", err);
+        alert("⚠️ Network error, please try again.");
+      }
+    }
+  </script>
+</body>
+</html>
